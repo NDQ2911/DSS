@@ -8,6 +8,7 @@ const tabPanels = document.querySelectorAll(".tab-panel");
 const optimizeForm = document.getElementById("optimize-form");
 const optimizationOutput = document.getElementById("optimization-output");
 const assignmentTreeEl = document.getElementById("assignment-tree");
+const blockTabsEl = document.getElementById("block-tabs");
 const refreshTreeBtn = document.getElementById("refresh-tree-btn");
 const refreshDashboardBtn = document.getElementById("refresh-dashboard-btn");
 
@@ -27,8 +28,26 @@ const roomGenOutput = document.getElementById("room-gen-output");
 
 const conflictChartCtx = document.getElementById("conflict-chart");
 let conflictChart;
+let assignmentBlocks = [];
+let activeBlockIndex = 0;
+let assignmentGeneratedAt = null;
+// Modal elements for room details
+const roomModal = document.getElementById("room-modal");
+const roomModalOverlay = document.getElementById("room-modal-overlay");
+const roomModalClose = document.getElementById("room-modal-close");
+const roomModalTitle = document.getElementById("room-modal-title");
+const roomModalMeta = document.getElementById("room-modal-meta");
+const roomModalBody = document.getElementById("room-modal-body");
 
 const jsonHeaders = { "Content-Type": "application/json" };
+
+const genderLabel = (value) => {
+  if (!value) return "Any";
+  const normalized = String(value).toLowerCase();
+  if (normalized === "male" || normalized === "nam") return "Nam";
+  if (normalized === "female" || normalized === "nu" || normalized === "nữ") return "Nữ";
+  return value;
+};
 
 function switchView(target) {
   views.forEach((view) => {
@@ -38,6 +57,95 @@ function switchView(target) {
     btn.classList.toggle("active", btn.dataset.viewSwitch === target);
   });
 }
+
+function openRoomModal(room) {
+  if (!roomModal) return;
+  const buildingLabel = room.building ? ` — ${room.building}` : "";
+  roomModalTitle.textContent = `${room.room_code}${buildingLabel}`;
+  const conflictScore = Number(room.conflict_score ?? 0).toFixed(2);
+  roomModalMeta.textContent = `Floor ${room.floor} • ${room.occupancy}/${room.capacity} occupants • Gender: ${room.gender ? genderLabel(room.gender) : "Any"} • Conflict ${conflictScore}`;
+  roomModalBody.innerHTML = "";
+
+  if (!room.students?.length) {
+    roomModalBody.innerHTML = `<p class='muted'>No students assigned</p>`;
+  } else {
+    room.students.forEach((s) => {
+      const prefs = s.preferences || {};
+      const preferenceTags = [
+        { label: "Introversion", key: "introversion" },
+        { label: "Sleep", key: "sleep_schedule" },
+        { label: "Cleanliness", key: "cleanliness" },
+        { label: "Noise", key: "noise_tolerance" },
+      ];
+      const preferenceHtml = preferenceTags
+        .map((pref) => `<li>${pref.label}: ${prefs[pref.key] ?? "?"}/5</li>`)
+        .join("");
+
+      const row = document.createElement("div");
+      row.className = "student-row";
+      row.innerHTML = `
+        <div class="left">
+          <strong>${s.name}</strong>
+          <span class="muted">${s.major ?? "Undeclared"} • ${genderLabel(s.gender)} • Year ${s.year ?? "?"}</span>
+          <ul class="preference-tags">${preferenceHtml}</ul>
+        </div>
+        <div class="right">
+          <span>${s.smoking ? "Smoker" : "Non-smoker"}</span>
+        </div>
+      `;
+      roomModalBody.appendChild(row);
+    });
+  }
+
+  roomModal.setAttribute("aria-hidden", "false");
+  // trap focus to modal close button for simplicity
+  roomModalClose.focus();
+}
+
+function closeRoomModal() {
+  if (!roomModal) return;
+  roomModal.setAttribute("aria-hidden", "true");
+}
+
+async function getRoomDetailsByCode(roomCode) {
+  if (!roomCode) return null;
+  if (!assignmentBlocks.length) {
+    try {
+      const data = await fetchJSON(`/analytics/assignment-map`);
+      renderAssignmentTree(data);
+    } catch (error) {
+      throw new Error(`Unable to load assignments: ${error.message}`);
+    }
+  }
+  for (const block of assignmentBlocks) {
+    const room = block.rooms.find((r) => r.room_code === roomCode);
+    if (room) {
+      return { block, room };
+    }
+  }
+  return null;
+}
+
+async function showRoomInsights(roomCode) {
+  try {
+    const details = await getRoomDetailsByCode(roomCode);
+    if (!details) {
+      throw new Error("Room details not found. Try refreshing assignments.");
+    }
+    openRoomModal({ ...details.room, building: details.block.building });
+  } catch (error) {
+    window.alert(error.message);
+  }
+}
+
+// modal event bindings
+if (roomModalClose) roomModalClose.addEventListener("click", closeRoomModal);
+if (roomModalOverlay) roomModalOverlay.addEventListener("click", closeRoomModal);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && roomModal && roomModal.getAttribute("aria-hidden") === "false") {
+    closeRoomModal();
+  }
+});
 
 function switchTab(target) {
   tabPanels.forEach((panel) => {
@@ -77,67 +185,111 @@ async function fetchJSON(path, options = {}) {
 }
 
 function renderAssignmentTree(data) {
+  assignmentBlocks = data?.blocks ?? [];
+  assignmentGeneratedAt = data?.generated_at ?? null;
+
+  if (blockTabsEl) {
+    blockTabsEl.innerHTML = "";
+  }
   assignmentTreeEl.innerHTML = "";
-  const blocks = data?.blocks || [];
-  if (blocks.length === 0) {
+
+  if (!assignmentBlocks.length) {
     assignmentTreeEl.innerHTML = "<p class='muted'>No assignments stored yet. Run the optimizer to generate assignments.</p>";
     return;
   }
 
-  blocks.forEach((block) => {
-    const blockCard = document.createElement("article");
-    blockCard.className = "block-card";
-    blockCard.innerHTML = `
-      <header>
-        <div>
-          <h3>${block.building}</h3>
-          <p>${block.rooms.length} rooms</p>
-        </div>
-        <span>${data.generated_at ? new Date(data.generated_at).toLocaleString() : ""}</span>
-      </header>
+  activeBlockIndex = Math.min(activeBlockIndex, assignmentBlocks.length - 1);
+  renderBlockTabs();
+  renderSelectedBlock();
+}
+
+function renderBlockTabs() {
+  if (!blockTabsEl) return;
+  blockTabsEl.innerHTML = "";
+  assignmentBlocks.forEach((block, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = block.building;
+    button.classList.toggle("active", index === activeBlockIndex);
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-selected", index === activeBlockIndex ? "true" : "false");
+    button.addEventListener("click", () => {
+      if (activeBlockIndex === index) return;
+      activeBlockIndex = index;
+      renderBlockTabs();
+      renderSelectedBlock();
+    });
+    blockTabsEl.appendChild(button);
+  });
+}
+
+function renderSelectedBlock() {
+  if (!assignmentBlocks.length) return;
+  const block = assignmentBlocks[activeBlockIndex];
+  if (!block) return;
+
+  assignmentTreeEl.innerHTML = "";
+  const blockCard = document.createElement("article");
+  blockCard.className = "block-card";
+  blockCard.innerHTML = `
+    <header>
+      <div>
+        <h3>${block.building}</h3>
+        <p>${block.rooms.length} rooms</p>
+      </div>
+      <span>${assignmentGeneratedAt ? new Date(assignmentGeneratedAt).toLocaleString() : ""}</span>
+    </header>
+  `;
+
+  const roomsContainer = document.createElement("div");
+  roomsContainer.className = "rooms-grid";
+
+  block.rooms.forEach((room) => {
+    const roomCard = document.createElement("div");
+    roomCard.className = "room-card";
+    roomCard.tabIndex = 0;
+    roomCard.setAttribute("role", "button");
+    roomCard.setAttribute("aria-label", `Open ${room.room_code} details`);
+    roomCard.innerHTML = `
+      <div class="room-meta">
+        <strong>${room.room_code}</strong>
+        <span>Floor ${room.floor}</span>
+      </div>
+      <p class="room-info">
+        ${room.occupancy}/${room.capacity} occupants • Gender: ${room.gender ? genderLabel(room.gender) : "Any"} • Conflict ${room.conflict_score}
+      </p>
     `;
 
-    const roomsContainer = document.createElement("div");
-    roomsContainer.className = "rooms-grid";
+    if (room.students?.length) {
+      const list = document.createElement("ul");
+      list.className = "room-students";
+      room.students.forEach((student) => {
+        const item = document.createElement("li");
+        item.innerHTML = `
+          <strong>${student.name}</strong>
+          <span>${genderLabel(student.gender)} • ${student.major ?? "Undeclared"} • Year ${student.year ?? "?"}</span>
+        `;
+        list.appendChild(item);
+      });
+      roomCard.appendChild(list);
+    } else {
+      const empty = document.createElement("p");
+      empty.className = "muted";
+      empty.textContent = "No students assigned";
+      roomCard.appendChild(empty);
+    }
 
-    block.rooms.forEach((room) => {
-      const roomCard = document.createElement("div");
-      roomCard.className = "room-card";
-      roomCard.innerHTML = `
-        <div class="room-meta">
-          <strong>${room.room_code}</strong>
-          <span>Floor ${room.floor}</span>
-        </div>
-        <p class="room-info">
-          ${room.occupancy}/${room.capacity} occupants • Gender: ${room.gender ?? "Any"} • Conflict ${room.conflict_score}
-        </p>
-      `;
-
-      if (room.students?.length) {
-        const list = document.createElement("ul");
-        list.className = "room-students";
-        room.students.forEach((student) => {
-          const item = document.createElement("li");
-          item.innerHTML = `
-            <strong>${student.name}</strong>
-            <span>${student.gender} • ${student.major ?? "Undeclared"} • Year ${student.year ?? "?"}</span>
-          `;
-          list.appendChild(item);
-        });
-        roomCard.appendChild(list);
-      } else {
-        const empty = document.createElement("p");
-        empty.className = "muted";
-        empty.textContent = "No students assigned";
-        roomCard.appendChild(empty);
-      }
-
-      roomsContainer.appendChild(roomCard);
+    // click / enter to open details modal
+    roomCard.addEventListener("click", () => openRoomModal(room));
+    roomCard.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") openRoomModal(room);
     });
 
-    blockCard.appendChild(roomsContainer);
-    assignmentTreeEl.appendChild(blockCard);
+    roomsContainer.appendChild(roomCard);
   });
+
+  blockCard.appendChild(roomsContainer);
+  assignmentTreeEl.appendChild(blockCard);
 }
 
 function updateMetrics(summary) {
@@ -153,10 +305,14 @@ function updateMetrics(summary) {
   } else {
     summary.critical_rooms.forEach((room) => {
       const item = document.createElement("li");
-      item.innerHTML = `
+      const button = document.createElement("button");
+      button.type = "button";
+      button.innerHTML = `
         <strong>${room.room_code}</strong>
         <span>score ${room.score.toFixed(2)} • ${room.occupancy}/${room.capacity}</span>
       `;
+      button.addEventListener("click", () => showRoomInsights(room.room_code));
+      item.appendChild(button);
       criticalRoomsList.appendChild(item);
     });
   }
@@ -204,6 +360,9 @@ function updateConflictChart(distribution = []) {
 
 async function loadAssignmentTree() {
   assignmentTreeEl.innerHTML = "<p class='muted'>Loading assignments…</p>";
+  if (blockTabsEl) {
+    blockTabsEl.innerHTML = "";
+  }
   try {
     const data = await fetchJSON(`/analytics/assignment-map`);
     renderAssignmentTree(data);
@@ -248,7 +407,10 @@ optimizeForm.addEventListener("submit", async (event) => {
     await loadAssignmentTree();
     await loadDashboard();
   } catch (error) {
-    setStatus(optimizationOutput, error.message, "error");
+    const message = error.message?.includes("Unable to place all students")
+      ? "Allocation failed: not enough compatible rooms. Please generate more rooms (at least 5% buffer) or adjust trait settings."
+      : error.message;
+    setStatus(optimizationOutput, message, "error");
   }
 });
 

@@ -5,6 +5,7 @@ from typing import Iterable, List, Sequence, Tuple
 
 MAX_LIKERT_SPREAD = 4.0
 MIXED_GENDER_PENALTY = 500.0
+HARD_CONSTRAINT_PENALTY = 1_000_000.0
 
 PAIR_WEIGHTS = {
     "introversion": 1.4,
@@ -56,11 +57,16 @@ def room_constraint_penalty(room: RoomProfileProtocol, students: Sequence[Studen
 
     if room.gender_restriction:
         g_restriction = room.gender_restriction.lower()
-        penalty += sum(50.0 for student in students if student.gender.lower() != g_restriction)
+        if any(student.gender.lower() != g_restriction for student in students):
+            return HARD_CONSTRAINT_PENALTY
 
     unique_genders = {student.gender.lower() for student in students}
     if len(unique_genders) > 1:
-        penalty += MIXED_GENDER_PENALTY
+        return HARD_CONSTRAINT_PENALTY
+
+    unique_smoking = {student.smoking for student in students}
+    if len(unique_smoking) > 1:
+        return HARD_CONSTRAINT_PENALTY
 
     if students:
         avg_noise = sum(s.noise_tolerance for s in students) / len(students)
@@ -71,8 +77,9 @@ def room_constraint_penalty(room: RoomProfileProtocol, students: Sequence[Studen
 
 
 def calculate_room_cost(room: RoomProfileProtocol, students: Sequence[StudentProfileProtocol]) -> float:
-    if len(students) < 2:
-        return room_constraint_penalty(room, students)
+    constraint_penalty = room_constraint_penalty(room, students)
+    if constraint_penalty >= HARD_CONSTRAINT_PENALTY or len(students) < 2:
+        return constraint_penalty
 
     pair_cost = 0.0
     pair_count = 0
@@ -81,7 +88,7 @@ def calculate_room_cost(room: RoomProfileProtocol, students: Sequence[StudentPro
         pair_count += 1
 
     avg_pair_cost = pair_cost / pair_count if pair_count else 0.0
-    return avg_pair_cost + room_constraint_penalty(room, students)
+    return avg_pair_cost + constraint_penalty
 
 
 def calculate_state_cost(state: Iterable[Tuple[RoomProfileProtocol, List[StudentProfileProtocol]]]) -> float:

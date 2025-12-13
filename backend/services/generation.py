@@ -5,6 +5,7 @@ import random
 from dataclasses import asdict, dataclass
 from datetime import date, timedelta
 from pathlib import Path
+import math
 from typing import Dict, Iterable, List, Sequence
 
 from sqlalchemy.orm import Session
@@ -328,10 +329,12 @@ def generate_rooms(
     if target_students <= 0:
         raise ValueError("target_students must be positive")
 
+    required_capacity = math.ceil(target_students * 1.05)
+
     max_possible_capacity = blocks * floors_per_block * rooms_per_floor * max(capacity_choices)
-    if target_students > max_possible_capacity:
+    if required_capacity > max_possible_capacity:
         raise ValueError(
-            "Configuration cannot satisfy capacity requirements. Increase blocks, floors, or rooms per floor."
+            "Configuration cannot satisfy the 5% buffer capacity requirement. Increase blocks, floors, or rooms per floor."
         )
 
     if clear_existing:
@@ -353,12 +356,12 @@ def generate_rooms(
 
     gender_iter = iter(gender_cycle)
 
-    while total_capacity < target_students and len(used_blocks) < blocks:
+    while total_capacity < required_capacity and len(used_blocks) < blocks:
         block_name = next(block_iter)
         used_blocks.append(block_name)
         for floor in range(1, floors_per_block + 1):
             for room_index in range(1, rooms_per_floor + 1):
-                if total_capacity >= target_students:
+                if total_capacity >= required_capacity:
                     break
                 capacity = random.choice(capacity_choices)
                 gender_restriction = next(gender_iter)
@@ -377,7 +380,7 @@ def generate_rooms(
                 db.add(room)
                 total_capacity += capacity
                 rooms_created += 1
-            if total_capacity >= target_students:
+            if total_capacity >= required_capacity:
                 break
 
     db.commit()
@@ -387,6 +390,6 @@ def generate_rooms(
         rooms_created=rooms_created,
         total_rooms=total_rooms,
         total_capacity=sum(room.capacity for room in db.query(models.Room).all()),
-        target_capacity=target_students,
+        target_capacity=required_capacity,
     )
     return summary.as_dict()

@@ -78,6 +78,12 @@ def build_assignment_tree(db: Session) -> Dict[str, object]:
                 "major": assignment.student.major,
                 "year": assignment.student.year,
                 "smoking": assignment.student.smoking,
+                "preferences": {
+                    "introversion": int(assignment.student.introversion_score or 3),
+                    "sleep_schedule": int(getattr(assignment.student, "sleep_schedule_score", 3) or 3),
+                    "cleanliness": int(assignment.student.cleanliness_score or 3),
+                    "noise_tolerance": int(assignment.student.noise_tolerance or 3),
+                },
             }
             for assignment in sorted(room.assignments, key=lambda a: a.student.name)
         ]
@@ -87,6 +93,7 @@ def build_assignment_tree(db: Session) -> Dict[str, object]:
         block["rooms"].append(
             {
                 "room_code": room_code,
+                "building": room.building,
                 "floor": room.floor,
                 "capacity": room.capacity,
                 "gender": room.gender_restriction,

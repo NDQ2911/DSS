@@ -8,6 +8,7 @@ from typing import Dict, List, Sequence, Tuple
 
 from .. import models
 from .cost import calculate_state_cost
+from .traits import is_student_compatible
 
 
 @dataclass(frozen=True)
@@ -75,20 +76,27 @@ class SimulatedAnnealingOptimizer:
         )
 
     def _initial_state(self) -> State:
-        shuffled_students = self.students[:]
-        random.shuffle(shuffled_students)
+        unassigned = self.students[:]
+        random.shuffle(unassigned)
 
         state: State = []
-        student_idx = 0
         for room in self.rooms:
-            remaining = len(shuffled_students) - student_idx
-            if remaining <= 0:
-                state.append((room, []))
-                continue
-            take = min(room.capacity, remaining)
-            chunk = shuffled_students[student_idx : student_idx + take]
-            state.append((room, list(chunk)))
-            student_idx += take
+            occupants: List[StudentProfile] = []
+            idx = 0
+            while idx < len(unassigned) and len(occupants) < room.capacity:
+                candidate = unassigned[idx]
+                if is_student_compatible(room, occupants, candidate):
+                    occupants.append(candidate)
+                    unassigned.pop(idx)
+                else:
+                    idx += 1
+            state.append((room, occupants))
+
+        if unassigned:
+            raise ValueError(
+                "Unable to place all students using the current trait matrix. "
+                "Consider adjusting room capacities or trait dimensions."
+            )
 
         return state
 
@@ -111,17 +119,28 @@ class SimulatedAnnealingOptimizer:
                 dest_idx = random.choice(dest_candidates)
                 if source_idx != dest_idx:
                     student_list = new_state[source_idx][1]
-                    student = student_list.pop(random.randrange(len(student_list)))
-                    new_state[dest_idx][1].append(student)
-                    return new_state
+                    student_pos = random.randrange(len(student_list))
+                    student = student_list[student_pos]
+                    dest_room, dest_occupants = new_state[dest_idx]
+                    if is_student_compatible(dest_room, dest_occupants, student):
+                        student_list.pop(student_pos)
+                        dest_occupants.append(student)
+                        return new_state
 
         if len(movable_rooms) >= 2:
             idx1, idx2 = random.sample(movable_rooms, 2)
             occ1 = new_state[idx1][1]
             occ2 = new_state[idx2][1]
+            room1, _ = new_state[idx1]
+            room2, _ = new_state[idx2]
             s_idx1 = random.randrange(len(occ1))
             s_idx2 = random.randrange(len(occ2))
-            occ1[s_idx1], occ2[s_idx2] = occ2[s_idx2], occ1[s_idx1]
+            student1 = occ1[s_idx1]
+            student2 = occ2[s_idx2]
+            if is_student_compatible(room1, [s for i, s in enumerate(occ1) if i != s_idx1], student2) and is_student_compatible(
+                room2, [s for i, s in enumerate(occ2) if i != s_idx2], student1
+            ):
+                occ1[s_idx1], occ2[s_idx2] = student2, student1
 
         return new_state
 
