@@ -9,6 +9,7 @@ A full-stack decision support system for assigning dormitory rooms using a simul
 - Sample data auto-seeded on first run for quick demos.
 - One-click student/room generators seeded with authentic Vietnamese names and majors.
 - Analytics layer exposing assignment trees, KPIs, and conflict distributions.
+- Preference insights summarize average introversion, sleep, cleanliness, noise, and smoking ratios directly on the dashboard.
 - Modern dashboard UI with data-generation screen, optimization tab, and monitoring tab.
 
 ## Quickstart

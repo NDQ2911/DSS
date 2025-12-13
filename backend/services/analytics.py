@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, List
 
-from sqlalchemy import func
+from sqlalchemy import Float, cast, func
 from sqlalchemy.orm import Session, joinedload
 
 from .. import models
@@ -145,6 +145,22 @@ def summarize_conflicts(db: Session) -> Dict[str, object]:
     rooms_filled = sum(1 for room in rooms_flat if room["occupancy"] > 0)
     total_capacity = db.query(func.coalesce(func.sum(models.Room.capacity), 0)).scalar() or 0
 
+    pref_intro, pref_sleep, pref_clean, pref_noise, pref_smoking = db.query(
+        func.avg(models.Student.introversion_score),
+        func.avg(models.Student.sleep_schedule_score),
+        func.avg(models.Student.cleanliness_score),
+        func.avg(models.Student.noise_tolerance),
+        func.avg(cast(models.Student.smoking, Float)),
+    ).one()
+
+    preference_insights = {
+        "introversion": round(pref_intro or 0.0, 2),
+        "sleep": round(pref_sleep or 0.0, 2),
+        "cleanliness": round(pref_clean or 0.0, 2),
+        "noise": round(pref_noise or 0.0, 2),
+        "smoking_ratio": round((pref_smoking or 0.0), 4),
+    }
+
     return {
         "total_students": total_students,
         "avg_conflict_score": round(total_conflict / rooms_evaluated, 3) if rooms_evaluated else 0.0,
@@ -155,5 +171,6 @@ def summarize_conflicts(db: Session) -> Dict[str, object]:
         "conflict_distribution": [
             {"label": label, "rooms": bucket_counts[label]} for label in bucket_labels
         ],
+        "preference_insights": preference_insights,
         "generated_at": summary["generated_at"],
     }

@@ -19,6 +19,13 @@ const metricElements = {
   totalRooms: document.querySelector('[data-metric="total-rooms"]'),
   totalCapacity: document.querySelector('[data-metric="total-capacity"]'),
 };
+const preferenceElements = {
+  introversion: document.querySelector('[data-pref="introversion"]'),
+  sleep: document.querySelector('[data-pref="sleep"]'),
+  cleanliness: document.querySelector('[data-pref="cleanliness"]'),
+  noise: document.querySelector('[data-pref="noise"]'),
+  smoking: document.querySelector('[data-pref="smoking"]'),
+};
 const criticalRoomsList = document.getElementById("critical-rooms-list");
 
 const studentGenForm = document.getElementById("student-gen-form");
@@ -298,6 +305,16 @@ function updateMetrics(summary) {
   metricElements.roomsFilled.textContent = summary.rooms_filled ?? 0;
   metricElements.totalRooms.textContent = summary.total_rooms ?? 0;
   metricElements.totalCapacity.textContent = summary.total_capacity ?? 0;
+
+  const prefs = summary.preference_insights || {};
+  if (preferenceElements.introversion) {
+    preferenceElements.introversion.textContent = (prefs.introversion ?? 0).toFixed(2);
+    preferenceElements.sleep.textContent = (prefs.sleep ?? 0).toFixed(2);
+    preferenceElements.cleanliness.textContent = (prefs.cleanliness ?? 0).toFixed(2);
+    preferenceElements.noise.textContent = (prefs.noise ?? 0).toFixed(2);
+    const smokingRatio = prefs.smoking_ratio ?? 0;
+    preferenceElements.smoking.textContent = `${(smokingRatio * 100).toFixed(1)}%`;
+  }
 
   criticalRoomsList.innerHTML = "";
   if (!summary.critical_rooms?.length) {
