@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from .. import models
 
 SEED_DIR = Path(__file__).resolve().parent.parent / "data"
-BIRTHDAY_START = date(2002, 1, 1)
+BIRTHDAY_START = date(2004, 1, 1)
 BIRTHDAY_END = date(2007, 12, 31)
 LIKERT_MIN = 1
 LIKERT_MAX = 5
@@ -23,6 +23,85 @@ SLEEP_WINDOWS = {
     4: "00:00 - 01:00",
     5: "01:00 - 03:00",
 }
+
+# Vietnamese name data
+NAME_DATA = {
+    "first_names": [
+        "Nguyễn", "Trần", "Lê", "Phạm", "Vũ", "Hoàng", "Hồ", "Đặng", "Bùi", "Dương", "Trương", "Đỗ",
+        "Lý", "Tô", "Ngô", "Đoàn", "Mai", "Võ", "Phan", "Trịnh", "Doãn", "Tạ", "Lương", "Đinh", "Hà",
+        "Lâm", "Cao", "Chu", "Tống", "Quách", "Tôn", "Khương", "Tăng", "Bành", "Thái", "Hứa", "Ninh",
+        "Khuất", "Đồng", "Lưu"
+    ],
+    "male_last_names": [
+        "Văn Minh Đức", "Văn Hoàng Anh", "Văn Quang Huy", "Văn Đức Anh", "Văn Thành Công",
+        "Văn Tuấn Anh", "Văn Hùng Anh", "Văn Minh Tuấn", "Văn Đức Khang", "Văn Quang Minh",
+        "Hoàng Minh Đức", "Hoàng Anh Tuấn", "Hoàng Quang Huy", "Hoàng Đức Anh", "Hoàng Thành Công",
+        "Hoàng Tuấn Anh", "Hoàng Hùng Anh", "Hoàng Minh Tuấn", "Hoàng Đức Khang", "Hoàng Quang Minh",
+        "Trần Minh Đức", "Trần Thành Công",
+        "Trần Tuấn Anh", "Trần Hùng Anh", "Trần Minh Tuấn", "Trần Đức Khang", "Trần Quang Minh",
+        "Lê Minh Đức", "Lê Hoàng Anh", "Lê Quang Huy", "Lê Đức Anh", "Lê Thành Công",
+        "Lê Tuấn Anh", "Lê Hùng Anh", "Lê Minh Tuấn", "Lê Đức Khang", "Lê Quang Minh",
+        "Phạm Minh Đức", "Phạm Hoàng Anh", "Phạm Quang Huy", "Phạm Đức Anh", "Phạm Thành Công",
+        "Phạm Tuấn Anh", "Phạm Hùng Anh", "Phạm Minh Tuấn", "Phạm Đức Khang", "Phạm Quang Minh",
+        "Vũ Minh Đức", "Vũ Hoàng Anh", "Vũ Quang Huy", "Vũ Đức Anh", "Vũ Thành Công",
+        "Minh Tuấn Anh", "Minh Hùng Anh", "Minh Tuấn Đức", "Minh Đức Khang", "Minh Quang Đức",
+        "Tuấn Anh Đức", "Tuấn Hùng Anh", "Tuấn Minh Anh", "Tuấn Đức Khang", "Tuấn Quang Minh",
+        "Minh Huy", "Hải Đăng", "Hoàng Tùng", "Quang Hieu", "Minh Tuấn", "Anh Duy",
+        "Mạnh Cường", "Đức Khang", "Phước Tài", "Đoàn Lâm", "Vũ Quang", "Hải Nam", "Kiên An", "Đình Tú",
+        "Bảo Nam", "Gia Hưng", "Trường Giang", "Khánh Lâm", "Vũ Đức", "Tiến Hòa", "Trí Quân",
+        "Hùng Anh", "Thanh Tùng", "Văn Sơn", "Quốc Duy", "Khoa Minh", "Kiên Văn", "Đức Tuấn", "Hoàng Phúc",
+        "Duy Tuấn", "Trường Sơn", "Tuấn Kiệt", "Phúc Thịnh", "Hưng Lợi", "Quang Đạt", "Vinh Hoàng",
+        "Thành Tâm", "Thanh Quang", "Công Sơn", "Lâm Quang", "Ngọc Thành", "Lộc Phát", "Trí Dũng", "Khang Đạt",
+        "Quốc Trung", "Hải Vũ", "Duy Khánh", "Khuê Minh", "Đức Anh", "Quang Đức", "Trung Kiên",
+        "Tùng Quân", "Hà Quang", "Ngọc Sơn", "Vinh Khoa", "Tài Đức", "Hữu Tài", "Sơn Hải", "Hồng Sơn",
+        "Hải Thanh", "Quang Bình", "Thiện Đức", "Hữu Trí", "Vương Anh"
+    ],
+    "female_last_names": [
+        "Thị Minh Thảo", "Thị Hồng Nhung", "Thị Lan Hương", "Thị Thu Hà", "Thị Ngọc Anh",
+        "Thị Linh Chi", "Thị Phương Nhi", "Thị Thanh Lan", "Thị Bảo Ngọc", "Thị Khánh Linh",
+        "Thị Linh Hương", "Thị Thảo Nguyên", "Thị Ánh Tuyết", "Thị Thu Hà", "Thị Hải Đan",
+        "Thị Trâm Anh", "Thị Diễm My", "Thị Mỹ Linh", "Thị Quỳnh Chi", "Thị Ngọc Hân",
+        "Thị Kim Ngân", "Thị Phương Thảo", "Thị Thảo Ly", "Thị Linh Chi", "Thị Tú Anh",
+        "Thị Như Quỳnh", "Thị Thiên Kim", "Thị Quỳnh Như", "Thị Bích Thuỳ", "Thị Thanh Mai",
+        "Thị Minh Thảo", "Thị Ngọc Thảo", "Thị Ánh Lan", "Thị Hồng Nhung", "Thị Thúy Anh",
+        "Thị Nhật Lan", "Thị Diễm Kiều", "Thị Minh Ngọc", "Thị Trang Nhung", "Thị Bảo Hà",
+        "Thị Thuý Vân", "Thị Hải Yến", "Thị Thùy Linh", "Thị Lan Hương", "Thị Bích Hạnh",
+        "Thị Thuỳ Dung", "Thị Kim Liên", "Thị Tú Quỳnh", "Thị Thảo Quyên", "Thị Phúc An",
+        "Thị Diễm Thanh", "Thị Hạnh Dung", "Thị Thiên Hương", "Thị Bích Lệ", "Thị Ngọc Tâm",
+        "Thùy Tiên", "Phương Nhi", "Thanh Lan", "Bảo Ngọc", "Khánh Linh", "Linh Hương",
+        "Thảo Nguyên", "Ánh Tuyết", "Thu Hà", "Hải Đan", "Trâm Anh", "Diễm My", "Mỹ Linh",
+        "Quỳnh Chi", "Ngọc Hân", "Kim Ngân", "Phương Thảo", "Thảo Ly", "Linh Chi", "Tú Anh", "Như Quỳnh",
+        "Thiên Kim", "Quỳnh Như", "Bích Thuỳ", "Thanh Mai", "Minh Thảo", "Ngọc Thảo", "Ánh Lan", "Hồng Nhung",
+        "Thúy Anh", "Nhật Lan", "Diễm Kiều", "Minh Ngọc", "Trang Nhung", "Bảo Hà", "Thuý Vân", "Hải Yến",
+        "Thùy Linh", "Lan Hương", "Bích Hạnh", "Thuỳ Dung", "Kim Liên", "Tú Quỳnh", "Thảo Quyên",
+        "Phúc An", "Diễm Thanh", "Hạnh Dung", "Thiên Hương", "Bích Lệ", "Ngọc Tâm", "Quỳnh Duyên", "Thùy Trang",
+        "Ánh Hồng", "Kim Chi", "Thiều Lan", "Hương Lan", "Khánh Hương", "Như Lan", "Hồng Quỳnh", "Thúy Vân",
+        "Thiên Tiên", "Thanh Hòa", "Thu Lan", "Thu Hương", "Thủy Tiên", "Hải Linh", "Như Hoa", "Bảo Như",
+        "Ngọc Dung", "Thiều Thư", "Tâm Hương", "Thúy Dung", "Thảo Linh"
+    ]
+}
+
+FACULTIES = [
+    "Trường Công nghệ Thông tin và Truyền thông",
+    "Trường Điện - Điện tử",
+    "Trường Cơ khí",
+    "Trường Kinh tế",
+    "Khoa Toán tin",
+    "Khoa Vật lý kỹ thuật",
+    "Khoa Ngoại ngữ",
+    "Trường Hóa và Khoa học sự sống",
+    "Khoa kỹ thuật vật liệu",
+    "Khoa công nghệ sinh học"
+]
+
+BEDTIME_TO_SLEEP_SCORE = {
+    21: 1,
+    22: 2,
+    23: 3,
+    0: 4,
+    1: 5,
+}
+
 BLOCK_LETTERS = [
     "A",
     "B",
@@ -95,39 +174,42 @@ def _random_score() -> int:
 
 
 def _random_sleep_score() -> int:
-    return random.randint(1, 5)
+    """Generate random bedtime hour and convert to sleep_schedule_score"""
+    bedtime = random.choice([21, 22, 23, 0, 1])
+    return BEDTIME_TO_SLEEP_SCORE.get(bedtime, 3)
 
 
 def _build_full_name(surnames: Sequence[str], names: Sequence[str]) -> str:
-    total_words = random.randint(2, 4)
-    surname = random.choice(surnames)
-    middle_word_count = max(total_words - 2, 0)
-    middle_words: List[str] = []
-    for _ in range(middle_word_count):
-        pool = random.choice([surnames, names])
-        middle_words.append(random.choice(pool))
-    given_name = random.choice(names)
-    return " ".join([surname, *middle_words, given_name])
+    """Build full name using Vietnamese name data, avoiding surname duplication"""
+    first_name = random.choice(NAME_DATA["first_names"])
+    # Randomly choose gender for name selection
+    gender = random.choice(["male", "female"])
+    if gender == "male":
+        last_names = NAME_DATA["male_last_names"]
+    else:
+        last_names = NAME_DATA["female_last_names"]
+
+    # Filter out names that start with the same surname
+    valid_last_names = [name for name in last_names if not name.startswith(first_name)]
+    if not valid_last_names:
+        valid_last_names = last_names
+
+    last_name = random.choice(valid_last_names)
+    return f"{first_name} {last_name}"
 
 
 def generate_students(
-    db: Session,
-    *,
-    count: int = 500,
-    male_ratio: float = 0.5,
-    smoking_ratio: float = 0.15,
-    clear_existing: bool = True,
+        db: Session,
+        *,
+        count: int = 500,
+        male_ratio: float = 0.5,
+        smoking_ratio: float = 0.15,
+        clear_existing: bool = True,
 ) -> Dict[str, float]:
     if count <= 0:
         raise ValueError("Count must be positive")
     male_ratio = min(max(male_ratio, 0.0), 1.0)
     smoking_ratio = min(max(smoking_ratio, 0.0), 1.0)
-
-    surnames = _load_seed_list("surnames.txt")
-    names = _load_seed_list("names.txt")
-    majors = _load_seed_list("majors.txt")
-    if not surnames or not names:
-        raise ValueError("Names and surnames seed files must not be empty")
 
     if clear_existing:
         db.query(models.Assignment).delete(synchronize_session=False)
@@ -144,25 +226,48 @@ def generate_students(
         else:
             female_count += 1
 
+        first_name = random.choice(NAME_DATA["first_names"])
+        if gender == "male":
+            last_names = NAME_DATA["male_last_names"]
+        else:
+            last_names = NAME_DATA["female_last_names"]
+
+        valid_last_names = [name for name in last_names if not name.startswith(first_name)]
+        if not valid_last_names:
+            valid_last_names = last_names
+
+        last_name = random.choice(valid_last_names)
+        full_name = f"{first_name} {last_name}"
+
         smoking = random.random() < smoking_ratio
         introversion = _random_score()
         cleanliness = _random_score()
-        noise = _random_score()
-        sleep_score = _random_sleep_score()
+
+        bedtime = random.choice([21, 22, 23, 0, 1])
+        sleep_score = BEDTIME_TO_SLEEP_SCORE.get(bedtime, 3)
+
+        noise_tolerance = _random_score()
+
+        birthday = _random_birthday()
+        birth_year = birthday.year
+        year = {2004: 4, 2005: 3, 2006: 2, 2007: 1}.get(birth_year, random.randint(1, 4))
+
+        major = random.choice(FACULTIES) if FACULTIES else None
 
         student = models.Student(
-            name=_build_full_name(surnames, names),
+            name=full_name,
             gender=gender,
-            major=random.choice(majors) if majors else None,
-            birthday=_random_birthday(),
-            year=random.randint(1, 4),
+            major=major,
+            birthday=birthday,
+            year=year,
             introversion_score=introversion,
             cleanliness_score=cleanliness,
-            noise_tolerance=noise,
+            noise_tolerance=noise_tolerance,
             sleep_schedule_score=sleep_score,
             smoking=smoking,
             additional_attributes={
                 "sleep_window": SLEEP_WINDOWS.get(sleep_score, "Not specified"),
+                "bedtime": bedtime,
             },
         )
         db.add(student)
@@ -197,15 +302,15 @@ def _room_facilities() -> List[str]:
 
 
 def generate_rooms(
-    db: Session,
-    *,
-    target_students: int | None = None,
-    blocks: int = 6,
-    floors_per_block: int = 6,
-    rooms_per_floor: int = 12,
-    capacity_choices: Sequence[int] | None = None,
-    clear_existing: bool = True,
-    gender_strategy: str = "alternating",
+        db: Session,
+        *,
+        target_students: int | None = None,
+        blocks: int = 6,
+        floors_per_block: int = 6,
+        rooms_per_floor: int = 12,
+        capacity_choices: Sequence[int] | None = None,
+        clear_existing: bool = True,
+        gender_strategy: str = "alternating",
 ) -> Dict[str, int]:
     if rooms_per_floor > 20:
         raise ValueError("rooms_per_floor cannot exceed 20 per requirements")

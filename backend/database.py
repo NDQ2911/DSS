@@ -46,7 +46,7 @@ def _seed_with_sample_data(models_module) -> None:
         if db.query(models_module.Student).count() == 0:
             students_file = sample_dir / "students.json"
             if students_file.exists():
-                students = json.loads(students_file.read_text())
+                students = json.loads(students_file.read_text(encoding='utf-8'))
                 for entry in students:
                     birthday = entry.get("birthday")
                     if isinstance(birthday, str):
@@ -56,7 +56,7 @@ def _seed_with_sample_data(models_module) -> None:
         if db.query(models_module.Room).count() == 0:
             rooms_file = sample_dir / "rooms.json"
             if rooms_file.exists():
-                rooms = json.loads(rooms_file.read_text())
+                rooms = json.loads(rooms_file.read_text(encoding='utf-8'))
                 for entry in rooms:
                     db.add(models_module.Room(**entry))
 
