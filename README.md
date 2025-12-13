@@ -21,7 +21,7 @@ flask --app app run --debug --port 8000
 
 # 2. Frontend (separate terminal)
 cd ../frontend
-python -m http.server 8080
+python -m http.server 3000
 ```
 
 Open <http://localhost:8080> to interact with the system. Use the **Data Generation** view to create students/rooms instantly, then hop to **Optimization & Dashboard** to run SA, inspect assignments grouped by block, and monitor KPIs via the conflict chart and critical-room list.
