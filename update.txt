@@ -1,0 +1,34 @@
+update the project: 
+
+About the data, I want to have an endpoint so that the user can call it and generate the data of rooms and students. The student data will be generated like this:
+
+- Name: Hard code the Vietnamese surnames and names in 2 txt file `surnames.txt` and `names.txt` (so that I can add the data later). The name will have 2-4 words, in Vietnamese order: the first word will be a surname and the last word is a name. For the middle words, you can insert a surname or a name there, but ensure the word length limit to 2-4. The surnames and names seed should be enough for generating about 2500+ names.
+- Birthday: Within a range of 01/01/2002 to 31/12/2007, the data is just for show, not a criterion for assignments. 
+- Gender: Male/Female only for simplicity. This is a capstone project, not a real one. Also, male students cannot stay with female students in a same room.
+- Major: May not be a criterion, but still have for a "real" data feel. The major will be labels in Vietnamese, fetch from here https://ts.hust.edu.vn/training-cate/nganh-dao-tao-dai-hoc. Here is some example on how you will get the name:
+	-  ( BF-E19 ) Kỹ thuật sinh học (Chương trình tiên tiến) will be parsed as Kỹ thuật sinh học 
+	-  ( BF2 ) Kỹ thuật Thực phẩm will be parsed as Kỹ thuật Thực phẩm
+You should read the website content and extract the name to a file `majors.txt`
+- Year: 1 - 4
+- Smoking preferences: Yes / No. This is a hard constraint.
+- Scores: Use Likert scale 1-5 for represent the data. The criteria include:
+	
+	- Introversion score: From Introvert (1) to Extrovert (5)
+	- Sleep schedule: 5 time frames from 9 (1) to 2/3h (2) in the morning
+	- Cleanliness: 1 (very messy and lazy to tidy up - once in more than 2 month) to 5 (tidy up regularly, maybe everyday).
+	- Noise tolerance: 1 (cannot stand a conversation around them when working) - 5 (do not bother even a festival held in the room).
+	
+About the room data generation, we need these information:
+- Block: The block name can be a combination of 1 letter as the first character and a number, e.g B1, B10, etc.
+- Room: The capacity of the room will be 6, 8, or 10 studens per room. The naming should be blockname + number. The number should represent the floor number and order of the room (1 floor shouldn't have more than 20 rooms), and have zero padding if the number is less than 10. For example, a room named B1-203 will be the 3rd room in the 2nd floor of block B1.
+Assume that the facility and price of a slot in a room is similar (the only difference may come from the electric/water usage, etc).
+
+The generation algorithm must ensure all registered students will have a room while I will change the number of generated students in code, but not too much as in reality, the manager always want to fill the rooms for profits. I can adjust the number of registered students.
+
+The data generation UI: we will have separated screen for data generation: students creation and rooms creation. Just a mouse click, then the students data will be saved to the database and can be shown to the UI. 
+
+The main screen, we will have 2 tabs:
+- First tab, we will optimize the room assignments in a click. After the optimization, this screen should show the results as lists of studens for every rooms, the data will be organized by blocks -> rooms. The optimization result should be saved in the database.
+- Second tab, we will have a dashboard for optimizing index of the algorithms. The information should be: total students, average conflict score, rooms filled (over total rooms) and critical rooms. We will also have a conflict distribution chart.
+
+

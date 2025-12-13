@@ -1,0 +1,26 @@
+[
+  {
+    "id": 101,
+    "building": "B1",
+    "room_code": "B1-201",
+    "floor": 2,
+    "capacity": 6,
+    "gender_restriction": "female",
+    "room_type": "quad",
+    "noise_level": 0.3,
+    "facilities": ["wifi", "AC"],
+    "current_occupancy": 0
+  },
+  {
+    "id": 102,
+    "building": "C1",
+    "room_code": "C1-305",
+    "floor": 3,
+    "capacity": 8,
+    "gender_restriction": "male",
+    "room_type": "quad",
+    "noise_level": 0.5,
+    "facilities": ["wifi"],
+    "current_occupancy": 1
+  }
+]
