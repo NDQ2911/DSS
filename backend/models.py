@@ -2,11 +2,8 @@ from sqlalchemy import Boolean, Column, Date, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from .database import Base
-
-
 class Student(Base):
     __tablename__ = "students"
-
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(128), nullable=False)
     gender = Column(String(16), nullable=False)
@@ -59,3 +56,22 @@ class Assignment(Base):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"Assignment(room_id={self.room_id}, student_id={self.student_id})"
+
+
+class LabeledData(Base):
+    """Stores user feedback about student compatibility for weight learning.
+    
+    Users provide distance/compatibility scores between pairs of students.
+    This data is used to train a Linear Regression model to learn optimal weights.
+    """
+    __tablename__ = "labeled_data"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student1_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    student2_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    distance_score = Column(Float, nullable=False)  # User-provided distance (0-100)
+    created_at = Column(Date, nullable=False)
+    meta_info = Column(JSON, nullable=False, default=dict)  # Additional info
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"LabeledData(student1={self.student1_id}, student2={self.student2_id}, score={self.distance_score})"

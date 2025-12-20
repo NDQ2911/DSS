@@ -32,6 +32,7 @@ const studentGenForm = document.getElementById("student-gen-form");
 const studentGenOutput = document.getElementById("student-gen-output");
 const roomGenForm = document.getElementById("room-gen-form");
 const roomGenOutput = document.getElementById("room-gen-output");
+const kmeansOptimizeBtn = document.getElementById("kmeans-optimize-btn");
 
 const conflictChartCtx = document.getElementById("conflict-chart");
 let conflictChart;
@@ -430,6 +431,31 @@ optimizeForm.addEventListener("submit", async (event) => {
     setStatus(optimizationOutput, message, "error");
   }
 });
+
+if (kmeansOptimizeBtn) {
+  kmeansOptimizeBtn.addEventListener("click", async () => {
+    setStatus(optimizationOutput, "Running KMeans optimization…");
+    try {
+      const result = await fetchJSON(`/assignments/kmeans-optimize`, {
+        method: "POST",
+        headers: jsonHeaders,
+        body: JSON.stringify({}),
+      });
+      const totalAssigned = Object.values(result.assignments || {}).reduce(
+        (sum, ids) => sum + (Array.isArray(ids) ? ids.length : 0),
+        0
+      );
+      optimizationOutput.innerHTML = `
+        <p>Strategy: <strong>${result.strategy || "kmeans"}</strong></p>
+        <p>Total assigned students: <strong>${totalAssigned}</strong></p>
+      `;
+      await loadAssignmentTree();
+      await loadDashboard();
+    } catch (error) {
+      setStatus(optimizationOutput, error.message, "error");
+    }
+  });
+}
 
 refreshTreeBtn.addEventListener("click", loadAssignmentTree);
 refreshDashboardBtn.addEventListener("click", loadDashboard);

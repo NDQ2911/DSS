@@ -77,6 +77,18 @@ class RoomGenerationSchema(Schema):
     )
     clear_existing = fields.Bool(load_default=True)
     gender_strategy = fields.Str(
-        load_default="alternating",
+        load_default="mixed",
         validate=validate.OneOf(["alternating", "mixed"]),
     )
+
+
+class LabeledDataSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    id = fields.Int(dump_only=True)
+    student1_id = fields.Int(required=True)
+    student2_id = fields.Int(required=True)
+    distance_score = fields.Float(required=True, validate=validate.Range(min=0, max=100))
+    created_at = fields.Date(dump_only=True)
+    meta_info = fields.Dict(keys=fields.Str(), values=fields.Raw(), load_default=dict)
