@@ -5,6 +5,8 @@ from marshmallow import ValidationError
 
 from .. import models
 from ..optimizer.sa import SimulatedAnnealingOptimizer
+from ..optimizer.kmeans_assign import kmeans_room_assignment
+from ..optimizer.weights import get_weight_dict
 from ..schemas import AssignmentSchema, OptimizeParamsSchema
 
 assignments_bp = Blueprint("assignments", __name__, url_prefix="/assignments")
@@ -108,3 +110,47 @@ def optimize_assignments():
         "runtime_ms": result["runtime_ms"],
     }
     return jsonify(response)
+
+
+@assignments_bp.route("/kmeans-optimize", methods=["POST"])
+def kmeans_optimize_assignments():
+    """Optimize assignments using k-means clustering."""
+    db = _get_db()
+    students = db.query(models.Student).all()
+    rooms = db.query(models.Room).order_by(models.Room.capacity.desc()).all()
+
+    if not students:
+        abort(400, description="No students available for optimization")
+    if not rooms:
+        abort(400, description="No rooms available for optimization")
+
+    try:
+        assignments = kmeans_room_assignment(students, rooms)
+    except (ValueError, RuntimeError) as exc:
+        import traceback
+        print(f"KMeans optimization error: {str(exc)}\n{traceback.format_exc()}")
+        abort(400, description=str(exc))
+    except Exception as exc:
+        import traceback
+        print(f"KMeans optimization error: {str(exc)}\n{traceback.format_exc()}")
+        abort(500, description=f"Internal error: {str(exc)}")
+
+    db.query(models.Assignment).delete(synchronize_session=False)
+    occupancy_by_room: Dict[int, int] = {}
+    for room_id, student_ids in assignments.items():
+        occupancy_by_room[room_id] = len(student_ids)
+        for student_id in student_ids:
+            db.add(models.Assignment(room_id=room_id, student_id=student_id))
+
+    for room in rooms:
+        room.current_occupancy = occupancy_by_room.get(room.id, 0)
+
+    db.commit()
+
+    return jsonify(
+        {
+            "assignments": assignments,
+            "strategy": "kmeans",
+            "weights": get_weight_dict(),
+        }
+    )

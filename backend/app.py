@@ -2,7 +2,13 @@ from flask import Flask, g, jsonify
 from flask_cors import CORS
 
 from .database import SessionLocal, init_db
-from .routers import analytics_bp, assignments_bp, generators_bp, rooms_bp, students_bp
+from .routers import (
+    analytics_bp,
+    assignments_bp,
+    generators_bp,
+    rooms_bp,
+    students_bp,
+)
 
 
 def create_app() -> Flask:

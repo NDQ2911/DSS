@@ -46,7 +46,8 @@
                 Iterations
                 <input type="number" step="any" name="iterations" value="3000" min="1" required />
               </label>
-              <button type="submit">Optimize</button>
+              <button type="submit">Optimize (Simulated Annealing)</button>
+              <button type="button" id="kmeans-optimize-btn">Optimize (KMeans)</button>
             </form>
             <div id="optimization-output" class="status"></div>
           </section>
@@ -175,8 +176,8 @@
             <label>
               Gender Strategy
               <select name="gender_strategy">
-                <option value="alternating" selected>Alternating</option>
-                <option value="mixed">Mixed</option>
+                <option value="mixed" selected>Mixed</option>
+                <option value="alternating">Alternating</option>
               </select>
             </label>
             <label>

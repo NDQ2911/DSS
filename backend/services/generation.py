@@ -311,7 +311,7 @@ def generate_rooms(
         rooms_per_floor: int = 12,
         capacity_choices: Sequence[int] | None = None,
         clear_existing: bool = True,
-        gender_strategy: str = "alternating",
+        gender_strategy: str = "mixed",
 ) -> Dict[str, int]:
     if rooms_per_floor > 20:
         raise ValueError("rooms_per_floor cannot exceed 20 per requirements")

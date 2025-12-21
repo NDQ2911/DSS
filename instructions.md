@@ -445,7 +445,7 @@ Create dorm inventory (blocks → floors → rooms) sized to host every student.
   "floors_per_block": 6,
   "rooms_per_floor": 12,
   "capacity_choices": [6, 8, 10],
-  "gender_strategy": "alternating",
+  "gender_strategy": "mixed",
   "clear_existing": true
 }
 ```
