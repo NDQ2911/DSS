@@ -309,8 +309,12 @@ function updateScatterChart(blocks) {
   if (elMed) elMed.textContent = stats.medium;
   if (elHigh) elHigh.textContent = stats.high;
 
+  const pointColors = dataPoints.map(p => p.y <= 2 ? "#10b981" : p.y <= 4 ? "#f59e0b" : "#ef4444");
+
   if (scatterChart) {
     scatterChart.data.datasets[0].data = dataPoints;
+    scatterChart.data.datasets[0].pointBackgroundColor = pointColors;
+    scatterChart.data.datasets[0].backgroundColor = pointColors;
     scatterChart.update();
     return;
   }
@@ -321,43 +325,68 @@ function updateScatterChart(blocks) {
       datasets: [{
         label: "Điểm xung đột",
         data: dataPoints,
-        borderColor: "#3b82f6",
-        backgroundColor: dataPoints.map(p => p.y < 2 ? "#10b981" : p.y < 4 ? "#f59e0b" : "#ef4444"),
-        pointRadius: 6,
-        pointHoverRadius: 10,
+        borderColor: "#64748b", // Darker slate for higher contrast
+        borderWidth: 3, // Thicker line
+        pointBackgroundColor: pointColors,
+        backgroundColor: pointColors,
+        pointBorderColor: "#fff",
+        pointBorderWidth: 3, // Thicker point border
+        pointRadius: 8,
+        pointHoverRadius: 12,
         showLine: true,
-        tension: 0.3,
+        tension: 0.3, // Slightly less curve for "sharper" feel
         fill: false,
       }],
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       parsing: { xAxisKey: "x", yAxisKey: "y" },
+      interaction: {
+        mode: 'nearest',
+        axis: 'x',
+        intersect: false
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          titleColor: '#1e293b',
+          bodyColor: '#475569',
+          borderColor: '#e2e8f0',
+          borderWidth: 1,
+          padding: 10,
+          displayColors: true,
           callbacks: {
             title: (ctx) => {
               const p = ctx[0].raw;
-              return `${p.roomCode} - ${p.building}`;
+              return `${p.building} - ${p.roomCode}`;
             },
             label: (ctx) => {
               const p = ctx.raw;
               return [`Xung đột: ${p.y.toFixed(2)}`, `Sức chứa: ${p.occupancy}/${p.capacity}`];
             },
+            labelColor: (ctx) => {
+              const val = ctx.raw.y;
+              const col = val <= 2 ? "#10b981" : val <= 4 ? "#f59e0b" : "#ef4444";
+              return { borderColor: col, backgroundColor: col };
+            }
           },
         },
       },
       scales: {
         x: {
           type: "linear",
-          title: { display: true, text: "Phòng" },
+          title: { display: false },
           grid: { display: false },
+          ticks: { display: false }
         },
         y: {
           title: { display: true, text: "Điểm xung đột" },
           beginAtZero: true,
-          grid: { color: "#f3f4f6" },
+          suggestedMax: 5,
+          grid: { color: "#f1f5f9", drawBorder: false },
+          ticks: { stepSize: 1 }
         },
       },
     },
