@@ -7,12 +7,15 @@ MAX_LIKERT_SPREAD = 4.0
 MIXED_GENDER_PENALTY = 500.0
 HARD_CONSTRAINT_PENALTY = 1_000_000.0
 
+# Pair weights aligned with KMeans weights (weights.py)
+# Feature order: [introversion, sleep, cleanliness, noise, year, major]
 PAIR_WEIGHTS = {
-    "introversion": 1.4,
-    "sleep": 1.2,
-    "cleanliness": 1.3,
-    "noise": 1.1,
-    "smoking": 2.0,
+    "introversion": 3.0,
+    "sleep": 2.5,
+    "cleanliness": 2.0,
+    "noise": 1.5,
+    "year": 0.1,
+    "major": 0.1,
 }
 
 
@@ -24,6 +27,8 @@ class StudentProfileProtocol:
     cleanliness_score: int
     noise_tolerance: int
     smoking: bool
+    year: int
+    major: str
 
 
 class RoomProfileProtocol:
@@ -34,18 +39,21 @@ class RoomProfileProtocol:
 
 
 def pair_compatibility_cost(a: StudentProfileProtocol, b: StudentProfileProtocol) -> float:
+    # Continuous features (normalized to 0-1 from 1-5 scale)
     sleep_diff = abs(a.sleep_schedule_score - b.sleep_schedule_score) / MAX_LIKERT_SPREAD
     intro_diff = abs(a.introversion_score - b.introversion_score) / MAX_LIKERT_SPREAD
     clean_diff = abs(a.cleanliness_score - b.cleanliness_score) / MAX_LIKERT_SPREAD
     noise_diff = abs(a.noise_tolerance - b.noise_tolerance) / MAX_LIKERT_SPREAD
-    smoking_penalty = 0.0 if a.smoking == b.smoking else 1.0
+    year_penalty = 0.0 if a.year == b.year else 1.0
+    major_penalty = 0.0 if (a.major or "").strip().lower() == (b.major or "").strip().lower() else 1.0
 
     return (
-        PAIR_WEIGHTS["sleep"] * sleep_diff
-        + PAIR_WEIGHTS["introversion"] * intro_diff
+        PAIR_WEIGHTS["introversion"] * intro_diff
+        + PAIR_WEIGHTS["sleep"] * sleep_diff
         + PAIR_WEIGHTS["cleanliness"] * clean_diff
         + PAIR_WEIGHTS["noise"] * noise_diff
-        + PAIR_WEIGHTS["smoking"] * smoking_penalty
+        + PAIR_WEIGHTS["year"] * year_penalty
+        + PAIR_WEIGHTS["major"] * major_penalty
     )
 
 
@@ -67,12 +75,6 @@ def room_constraint_penalty(room: RoomProfileProtocol, students: Sequence[Studen
     unique_smoking = {student.smoking for student in students}
     if len(unique_smoking) > 1:
         return HARD_CONSTRAINT_PENALTY
-
-    if students:
-        avg_noise = sum(s.noise_tolerance for s in students) / len(students)
-        normalized_noise = avg_noise / 5.0
-        penalty += abs(normalized_noise - room.noise_level) * 5.0
-
     return penalty
 
 

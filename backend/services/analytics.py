@@ -35,6 +35,8 @@ def _student_profile(student: models.Student) -> StudentProfile:
         cleanliness_score=int(student.cleanliness_score or 3),
         noise_tolerance=int(student.noise_tolerance or 3),
         smoking=bool(student.smoking),
+        year=int(student.year or 2),
+        major=(student.major or "").strip(),
     )
 
 

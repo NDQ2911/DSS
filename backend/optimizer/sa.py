@@ -20,6 +20,8 @@ class StudentProfile:
     cleanliness_score: int
     noise_tolerance: int
     smoking: bool
+    year: int
+    major: str
 
 
 @dataclass(frozen=True)
@@ -65,6 +67,8 @@ class SimulatedAnnealingOptimizer:
             cleanliness_score=student.cleanliness_score,
             noise_tolerance=student.noise_tolerance,
             smoking=student.smoking,
+            year=student.year or 2,
+            major=(student.major or "").strip(),
         )
 
     def _to_room_profile(self, room: models.Room) -> RoomProfile:
