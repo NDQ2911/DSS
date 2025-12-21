@@ -143,6 +143,8 @@ def summarize_conflicts(db: Session) -> Dict[str, object]:
     total_students = db.query(func.count(models.Student.id)).scalar() or 0
     total_rooms = db.query(func.count(models.Room.id)).scalar() or 0
     rooms_filled = sum(1 for room in rooms_flat if room["occupancy"] > 0)
+    #tổng số lượng sinh viên được xếp phòng 
+    students_placed = sum(room["occupancy"] for room in rooms_flat)
     total_capacity = db.query(func.coalesce(func.sum(models.Room.capacity), 0)).scalar() or 0
 
     pref_intro, pref_sleep, pref_clean, pref_noise, pref_smoking = db.query(
@@ -161,8 +163,15 @@ def summarize_conflicts(db: Session) -> Dict[str, object]:
         "smoking_ratio": round((pref_smoking or 0.0), 4),
     }
 
+    male_count = db.query(func.count(models.Student.id)).filter(
+        func.lower(models.Student.gender) == "male"
+    ).scalar() or 0
+    male_ratio = male_count / total_students if total_students > 0 else 0.5
+
     return {
         "total_students": total_students,
+        "students_placed": students_placed,
+        "male_ratio": round(male_ratio, 4),
         "avg_conflict_score": round(total_conflict / rooms_evaluated, 3) if rooms_evaluated else 0.0,
         "rooms_filled": rooms_filled,
         "total_rooms": total_rooms,

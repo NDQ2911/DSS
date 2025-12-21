@@ -1,213 +1,270 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dormitory Room Assignment DSS</title>
-    <link rel="stylesheet" href="./style.css" />
-  </head>
-  <body>
-    <header>
-      <h1>Dormitory Room Assignment DSS</h1>
-      <p>Manage students, rooms, and run the simulated annealing optimizer.</p>
-    </header>
+<html lang="vi">
 
-    <main>
-      <nav class="primary-nav">
-        <button class="active" data-view-switch="operations">Optimization & Dashboard</button>
-        <button data-view-switch="generation">Data Generation</button>
-      </nav>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Hệ thống hỗ trợ quyết định phân phòng ký túc xá" />
+  <title>Phân Phòng Ký Túc Xá - DSS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
 
-      <section class="view active" data-view="operations">
-        <div class="tabs">
-          <button class="active" data-tab-switch="assignments">Assignments</button>
-          <button data-tab-switch="dashboard">Dashboard</button>
-        </div>
+<body>
+  <header>
+    <h1>Hệ Thống Phân Phòng Ký Túc Xá</h1>
+    <p>Quản lý sinh viên, phòng ở và xếp phòng tự động</p>
+  </header>
 
-        <div class="tab-panel active" data-tab="assignments">
-          <section class="card">
-            <div class="section-header">
-              <div>
-                <h2>Run Optimization</h2>
-                <p>Trigger the simulated annealing search with custom parameters.</p>
-              </div>
-              <button id="refresh-tree-btn">Reload Assignments</button>
-            </div>
-            <form id="optimize-form" class="grid">
-              <label>
-                Initial Temperature
-                <input type="number" step="any" name="initial_temperature" value="1000" min="1" required />
-              </label>
-              <label>
-                Cooling Rate
-                <input type="number" step="any" name="cooling_rate" value="0.95" min="0.5" max="0.999" required />
-              </label>
-              <label>
-                Iterations
-                <input type="number" step="any" name="iterations" value="3000" min="1" required />
-              </label>
-              <button type="submit">Optimize (Simulated Annealing)</button>
-              <button type="button" id="kmeans-optimize-btn">Optimize (KMeans)</button>
-            </form>
-            <div id="optimization-output" class="status"></div>
-          </section>
+  <main>
+    <nav class="primary-nav">
+      <button class="active" data-view-switch="operations">Xếp Phòng & Dashboard</button>
+      <button data-view-switch="generation">Tạo Dữ Liệu</button>
+      <button data-view-switch="history">Lịch Sử</button>
+    </nav>
 
-          <section class="card">
-            <div class="section-header">
-              <h2>Assignments by Block</h2>
-              <p>Results are persisted and grouped by block → room.</p>
-            </div>
-            <div class="block-browser">
-              <div id="block-tabs" class="chip-strip" role="tablist" aria-label="Block selector"></div>
-              <div id="assignment-tree" class="assignment-tree" aria-live="polite"></div>
-            </div>
-          </section>
-        </div>
-
-        <div class="tab-panel" data-tab="dashboard">
-          <section class="card">
-            <div class="section-header">
-              <div>
-                <h2>Optimization Dashboard</h2>
-                <p>Key indicators and conflict trends.</p>
-              </div>
-              <button id="refresh-dashboard-btn">Refresh Dashboard</button>
-            </div>
-            <div class="metric-grid">
-              <article>
-                <h3>Total Students</h3>
-                <p data-metric="total-students">0</p>
-              </article>
-              <article>
-                <h3>Average Conflict</h3>
-                <p data-metric="avg-conflict">0</p>
-              </article>
-              <article>
-                <h3>Rooms Filled</h3>
-                <p><span data-metric="rooms-filled">0</span>/<span data-metric="total-rooms">0</span></p>
-              </article>
-              <article>
-                <h3>Total Capacity</h3>
-                <p data-metric="total-capacity">0</p>
-              </article>
-            </div>
-            <div class="preference-card">
-              <h3>Preference Insights</h3>
-              <ul class="preference-list">
-                <li><span>Introversion Avg</span><strong data-pref="introversion">0</strong></li>
-                <li><span>Sleep Avg</span><strong data-pref="sleep">0</strong></li>
-                <li><span>Cleanliness Avg</span><strong data-pref="cleanliness">0</strong></li>
-                <li><span>Noise Avg</span><strong data-pref="noise">0</strong></li>
-                <li><span>Smoking Ratio</span><strong data-pref="smoking">0%</strong></li>
-              </ul>
-            </div>
-            <div class="chart-wrapper">
-              <canvas id="conflict-chart" height="220"></canvas>
-            </div>
-            <div class="critical-rooms">
-              <h3>Critical Rooms</h3>
-              <ul id="critical-rooms-list"></ul>
-            </div>
-          </section>
-        </div>
-      </section>
-
-      <section class="view" data-view="generation">
-        <section class="card">
-          <div class="section-header">
-            <div>
-              <h2>Generate Students</h2>
-              <p>Build a dataset with Vietnamese profiles, birthdays, and preferences.</p>
-            </div>
-          </div>
-          <form id="student-gen-form" class="grid">
-            <label>
-              Count
-              <input type="number" name="count" value="500" min="1" max="5000" step="any" required />
-            </label>
-            <label>
-              Male Ratio
-              <input type="number" step="any" name="male_ratio" value="0.5" min="0" max="1" />
-            </label>
-            <label>
-              Smoking Ratio
-              <input type="number" step="any" name="smoking_ratio" value="0.15" min="0" max="1" />
-            </label>
-            <label>
-              Clear Existing
-              <select name="clear_existing">
-                <option value="true" selected>Yes</option>
-                <option value="false">No</option>
-              </select>
-            </label>
-            <button type="submit">Generate Students</button>
-          </form>
-          <div id="student-gen-output" class="status"></div>
-        </section>
-
-        <section class="card">
-          <div class="section-header">
-            <div>
-              <h2>Generate Rooms</h2>
-              <p>Create blocks, floors, and rooms sized to host every student.</p>
-            </div>
-          </div>
-          <form id="room-gen-form" class="grid">
-            <label>
-              Target Students
-              <input type="number" name="target_students" placeholder="Leave blank to auto" min="1" />
-            </label>
-            <label>
-              Blocks
-              <input type="number" name="blocks" value="6" min="1" max="20" />
-            </label>
-            <label>
-              Floors / Block
-              <input type="number" name="floors_per_block" value="6" min="1" max="15" />
-            </label>
-            <label>
-              Rooms / Floor
-              <input type="number" name="rooms_per_floor" value="12" min="1" max="20" />
-            </label>
-            <label>
-              Capacity Options (comma separated)
-              <input type="text" name="capacity_choices" value="6,8,10" />
-            </label>
-            <label>
-              Gender Strategy
-              <select name="gender_strategy">
-                <option value="mixed" selected>Mixed</option>
-                <option value="alternating">Alternating</option>
-              </select>
-            </label>
-            <label>
-              Clear Existing
-              <select name="clear_existing">
-                <option value="true" selected>Yes</option>
-                <option value="false">No</option>
-              </select>
-            </label>
-            <button type="submit">Generate Rooms</button>
-          </form>
-          <div id="room-gen-output" class="status"></div>
-        </section>
-      </section>
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-    <script src="./app.js" type="module" defer></script>
-
-    <!-- Room details modal -->
-    <div id="room-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
-      <div id="room-modal-overlay" class="modal-overlay" tabindex="-1"></div>
-      <div class="modal-content" role="document">
-        <button id="room-modal-close" class="modal-close" aria-label="Close room details">×</button>
-        <header>
-          <h3 id="room-modal-title">Room</h3>
-          <p id="room-modal-meta" class="muted"></p>
-        </header>
-        <section id="room-modal-body"></section>
+    <section class="view active" data-view="operations">
+      <div class="tabs">
+        <button class="active" data-tab-switch="assignments">Kết Quả Phân Phòng</button>
+        <button data-tab-switch="dashboard">Dashboard</button>
       </div>
+
+      <div class="tab-panel active" data-tab="assignments">
+        <section class="card">
+          <div class="section-header">
+            <h2>Xếp Phòng</h2>
+            <div class="button-group">
+              <button type="button" id="sa-optimize-btn" class="btn-secondary">Xếp theo Simulated Annealing</button>
+              <button type="button" id="kmeans-optimize-btn" class="btn-secondary">Xếp theo KMeans</button>
+            </div>
+          </div>
+          <div id="optimization-output" class="status"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-header">
+            <h2>Sơ Đồ Phân Phòng</h2>
+            <button id="refresh-tree-btn" class="btn-secondary">Tải Lại</button>
+          </div>
+          <div id="floor-diagram" class="floor-diagram"></div>
+        </section>
+
+
+      </div>
+
+      <div class="tab-panel" data-tab="dashboard">
+        <section class="card">
+          <div class="section-header">
+            <h2>Tổng Quan</h2>
+            <button id="refresh-dashboard-btn" class="btn-secondary">Làm Mới</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card stat-primary">
+              <div class="stat-icon">👥</div>
+              <div class="stat-content">
+                <span class="stat-value" data-metric="total-students">0</span>
+                <span class="stat-label">Tổng Sinh Viên</span>
+              </div>
+            </div>
+            <div class="stat-card stat-success">
+              <div class="stat-icon">✓</div>
+              <div class="stat-content">
+                <span class="stat-value" data-metric="students-placed">0</span>
+                <span class="stat-label">Đã Xếp Phòng</span>
+              </div>
+            </div>
+            <div class="stat-card stat-info">
+              <div class="stat-icon">🏠</div>
+              <div class="stat-content">
+                <span class="stat-value"><span data-metric="rooms-filled">0</span>/<span
+                    data-metric="total-rooms">0</span></span>
+                <span class="stat-label">Phòng Đã Xếp</span>
+              </div>
+            </div>
+            <div class="stat-card stat-warning">
+              <div class="stat-icon">⚠</div>
+              <div class="stat-content">
+                <span class="stat-value" data-metric="critical-count">0</span>
+                <span class="stat-label">Phòng Cần Lưu Ý</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-header">
+            <h2>Hiệu Quả Thuật Toán</h2>
+          </div>
+          <div class="efficiency-grid">
+            <div class="efficiency-item">
+              <div class="efficiency-bar">
+                <div class="efficiency-fill" data-fill="efficiency"></div>
+              </div>
+              <div class="efficiency-label">
+                <span>Tỷ Lệ Xếp Phòng</span>
+                <strong data-metric="efficiency">0%</strong>
+              </div>
+            </div>
+            <div class="efficiency-item">
+              <div class="efficiency-bar">
+                <div class="efficiency-fill" data-fill="satisfaction"></div>
+              </div>
+              <div class="efficiency-label">
+                <span>Độ Hài Lòng Dự Kiến</span>
+                <strong data-metric="satisfaction">0%</strong>
+              </div>
+            </div>
+            <div class="efficiency-item">
+              <div class="efficiency-bar">
+                <div class="efficiency-fill" data-fill="capacity"></div>
+              </div>
+              <div class="efficiency-label">
+                <span>Tỷ Lệ Sử Dụng Sức Chứa</span>
+                <strong data-metric="capacity-usage">0%</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="charts-row">
+          <section class="card chart-card">
+            <div class="section-header">
+              <h2>Thông Số Sở Thích TB</h2>
+            </div>
+            <div class="chart-container">
+              <canvas id="preference-chart" height="200"></canvas>
+            </div>
+          </section>
+
+          <section class="card chart-card">
+            <div class="section-header">
+              <h2>Thống Kê Giới Tính</h2>
+            </div>
+            <div class="chart-container">
+              <canvas id="gender-chart" height="200"></canvas>
+            </div>
+          </section>
+        </div>
+
+        <section class="card">
+          <div class="section-header">
+            <h2>Phòng Cần Lưu Ý</h2>
+          </div>
+          <ul id="critical-rooms-list" class="critical-list"></ul>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" data-view="generation">
+      <section class="card">
+        <div class="section-header">
+          <h2>Tạo Sinh Viên</h2>
+        </div>
+        <form id="student-gen-form" class="grid">
+          <label>
+            Số Lượng
+            <input type="number" name="count" value="500" min="1" max="5000" required />
+          </label>
+          <label>
+            Tỉ Lệ Nam
+            <input type="number" step="any" name="male_ratio" value="0.5" min="0" max="1" />
+          </label>
+          <label>
+            Tỉ Lệ Hút Thuốc
+            <input type="number" step="any" name="smoking_ratio" value="0.15" min="0" max="1" />
+          </label>
+          <label>
+            Xóa Dữ Liệu Cũ
+            <select name="clear_existing">
+              <option value="true" selected>Có</option>
+              <option value="false">Không</option>
+            </select>
+          </label>
+          <button type="submit">Tạo Sinh Viên</button>
+        </form>
+        <div id="student-gen-output" class="status"></div>
+        <div id="students-table-container" class="table-container"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <h2>Tạo Phòng</h2>
+        </div>
+        <form id="room-gen-form" class="grid">
+          <label>
+            Số SV Mục Tiêu
+            <input type="number" name="target_students" placeholder="Để trống = tự động" min="1" />
+          </label>
+          <label>
+            Tầng/Tòa
+            <input type="number" name="floors_per_block" value="6" min="1" max="15" />
+          </label>
+          <label>
+            Phòng/Tầng
+            <input type="number" name="rooms_per_floor" value="12" min="1" max="20" />
+          </label>
+          <label>
+            Sức Chứa
+            <input type="text" name="capacity_choices" value="6,8,10" />
+          </label>
+          <label>
+            Giới Tính
+            <select name="gender_strategy">
+              <option value="mixed" selected>Hỗn Hợp</option>
+              <option value="alternating">Xen Kẽ</option>
+            </select>
+          </label>
+          <label>
+            Xóa Dữ Liệu Cũ
+            <select name="clear_existing">
+              <option value="true" selected>Có</option>
+              <option value="false">Không</option>
+            </select>
+          </label>
+          <button type="submit">Tạo Phòng</button>
+        </form>
+        <div id="room-gen-output" class="status"></div>
+        <div id="rooms-table-container" class="table-container"></div>
+      </section>
+    </section>
+
+    <section class="view" data-view="history">
+      <section class="card">
+        <div class="section-header">
+          <h2>Lịch Sử Xếp Phòng</h2>
+          <button id="clear-history-btn" class="btn-secondary">Xóa Lịch Sử</button>
+        </div>
+        <p class="muted">So sánh kết quả giữa các thuật toán KMeans và Simulated Annealing</p>
+        <div id="history-list" class="history-list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <h2>So Sánh Thuật Toán</h2>
+        </div>
+        <div class="chart-container chart-wide">
+          <canvas id="comparison-chart" height="250"></canvas>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="./app.js" type="module" defer></script>
+
+  <div id="room-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div id="room-modal-overlay" class="modal-overlay" tabindex="-1"></div>
+    <div class="modal-content" role="document">
+      <button id="room-modal-close" class="modal-close" aria-label="Đóng">×</button>
+      <header>
+        <h3 id="room-modal-title">Phòng</h3>
+        <p id="room-modal-meta" class="muted"></p>
+      </header>
+      <section id="room-modal-body"></section>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>
