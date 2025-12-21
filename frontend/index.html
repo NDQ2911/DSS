@@ -51,7 +51,28 @@
           <div id="floor-diagram" class="floor-diagram"></div>
         </section>
 
-
+        <section class="card">
+          <div class="section-header">
+            <h2>Phân Bố Xung Đột Theo Phòng</h2>
+            <div class="conflict-stats">
+              <div class="stat-item">
+                <span class="dot low"></span>
+                <span>Thấp (0-2): <strong id="stat-low">0</strong></span>
+              </div>
+              <div class="stat-item">
+                <span class="dot medium"></span>
+                <span>TB (2-4): <strong id="stat-medium">0</strong></span>
+              </div>
+              <div class="stat-item">
+                <span class="dot high"></span>
+                <span>Cao (>4): <strong id="stat-high">0</strong></span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="satisfaction-scatter-chart" height="140"></canvas>
+          </div>
+        </section>
       </div>
 
       <div class="tab-panel" data-tab="dashboard">
